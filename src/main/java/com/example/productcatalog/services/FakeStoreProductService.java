@@ -5,13 +5,18 @@ import com.example.productcatalog.dtos.GenericProductDto;
 import com.example.productcatalog.exceptions.NotFoundException;
 import com.example.productcatalog.models.Product;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RequestCallback;
+import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static java.util.Objects.nonNull;
 
 @Service("fakeStoreProductService")
 public class FakeStoreProductService  implements ProductService{
@@ -68,9 +73,14 @@ public class FakeStoreProductService  implements ProductService{
     @Override
     public GenericProductDto updateProduct(GenericProductDto genericProductDto, Long id) {
         RestTemplate restTemplate = restTemplateBuilder.build();
-        restTemplate.put(updateProductRequestUrl, genericProductDto, GenericProductDto.class, id);
 
-        return null;
+        RequestCallback requestCallback = restTemplate.acceptHeaderRequestCallback(FakeStoreProductDto.class);
+        ResponseExtractor<ResponseEntity<FakeStoreProductDto>> responseExtractor = restTemplate.responseEntityExtractor(FakeStoreProductDto.class);
+        ResponseEntity<FakeStoreProductDto> response = restTemplate.execute(updateProductRequestUrl, HttpMethod.PUT,
+                requestCallback, responseExtractor, id);
+
+        FakeStoreProductDto fakeStoreProductDto = response.getBody();
+        return convertToGenericProductDto(fakeStoreProductDto);
     }
 
     @Override
