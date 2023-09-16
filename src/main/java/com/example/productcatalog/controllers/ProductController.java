@@ -1,21 +1,16 @@
 package com.example.productcatalog.controllers;
 
 import com.example.productcatalog.dtos.ExceptionData;
-import com.example.productcatalog.dtos.FakeStoreProductDto;
 import com.example.productcatalog.dtos.GenericProductDto;
 import com.example.productcatalog.exceptions.NotFoundException;
-import com.example.productcatalog.models.Product;
 import com.example.productcatalog.services.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/products")
@@ -24,6 +19,9 @@ public class ProductController {
     private ProductService productService;
 
     // Constructor Injection
+    // public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
+    // @Primary annotation to specify default service
+
     public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
         this.productService = productService;
     }
