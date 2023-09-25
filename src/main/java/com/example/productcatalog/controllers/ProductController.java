@@ -1,67 +1,103 @@
 package com.example.productcatalog.controllers;
 
-import com.example.productcatalog.dtos.ExceptionData;
-import com.example.productcatalog.dtos.GenericProductDto;
-import com.example.productcatalog.exceptions.NotFoundException;
+import com.example.productcatalog.dtos.CategoryListDto;
+import com.example.productcatalog.dtos.RequestProductDto;
+import com.example.productcatalog.dtos.ResponseProductDto;
+import com.example.productcatalog.dtos.UpdateProductDto;
+import com.example.productcatalog.models.Category;
+import com.example.productcatalog.models.Price;
+import com.example.productcatalog.models.Product;
 import com.example.productcatalog.services.ProductService;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import com.example.productcatalog.services.ProductServicedb;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
-    private ProductService productService;
+    ProductServicedb productServicedb;
 
-    // Constructor Injection
-    // public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
-    // @Primary annotation to specify default service
-
-    public ProductController(@Qualifier("fakeStoreProductService") ProductService productService) {
-        this.productService = productService;
-    }
-    // setter injection and field injection by Autowired is not recommended
-
-    @GetMapping
-    public List<GenericProductDto> getAllProducts(){
-        return productService.getAllProducts();
+    public ProductController(ProductServicedb productServicedb) {
+        this.productServicedb = productServicedb;
     }
 
-    //localhost:8080/products/123
     @GetMapping("/{id}")
-    public GenericProductDto getProductsById(@PathVariable("id") Long id) throws NotFoundException{
-//        return "Product id: " + id;
-        return productService.getProductById(id);
+    public ResponseProductDto getProductById(@PathVariable("id") String uuid) {
 
-    }
+        Product product = productServicedb.getProductByID(UUID.fromString(uuid));
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<GenericProductDto> deleteProductById(@PathVariable("id") Long id) throws NotFoundException{
-        ResponseEntity<GenericProductDto> response = new ResponseEntity<>(productService.deleteProduct(id), HttpStatusCode.valueOf(201));
-        return response;
-//  productService.deleteProduct(id);
-
+        return convertProductToResponseProductDto(product);
     }
 
     @PostMapping
-    public GenericProductDto createProduct(@RequestBody GenericProductDto genericProductDto) {
-//        return "New product created "+ UUID.randomUUID();
-        return productService.createProduct(genericProductDto);
+    public ResponseProductDto createProduct(@RequestBody RequestProductDto requestProductDto) {
+
+        Product product = new Product();
+        product.setTitle((requestProductDto.getTitle()));
+        product.setDescription(requestProductDto.getDescription());
+        product.setImage(requestProductDto.getImage());
+
+        Price price = new Price(requestProductDto.getCurrency(), requestProductDto.getPrice());
+
+        Product resProduct = productServicedb.createProduct(product, requestProductDto.getCategoryName(), price);
+
+        return convertProductToResponseProductDto(resProduct);
     }
 
-    @PutMapping("/{id}")
-    public GenericProductDto updateProductById(@RequestBody GenericProductDto genericProductDto) {
-        return productService.updateProduct(genericProductDto, genericProductDto.getId());
+    @GetMapping("/all")
+    public List<ResponseProductDto> getAllProducts() {
+
+        List<Product> products = productServicedb.getAllProducts();
+        List<ResponseProductDto> responseProductDtos = new ArrayList<>();
+
+        products.forEach((product -> {
+            responseProductDtos.add(convertProductToResponseProductDto(product));
+        }));
+
+        return  responseProductDtos;
     }
 
-    @ExceptionHandler(NotFoundException.class)
-    private ResponseEntity<ExceptionData> handleNotFoundException(NotFoundException notFoundException) {
-        return new ResponseEntity<>(new ExceptionData(HttpStatus.NOT_FOUND,notFoundException.getMessage()), HttpStatus.NOT_FOUND);
+    private ResponseProductDto convertProductToResponseProductDto(Product product) {
 
+        ResponseProductDto productDto = new ResponseProductDto();
+        productDto.setTitle(product.getTitle());
+        productDto.setDescription(product.getDescription());
+        productDto.setImage(product.getImage());
+        productDto.setPrice(product.getPrice());
+
+        return productDto;
     }
+
+    @PutMapping
+    public ResponseProductDto updateProductTitle(@RequestBody UpdateProductDto updateProductDto) {
+
+       Product resProduct = productServicedb.updateProductTitle(updateProductDto.getTitle(), UUID.fromString(updateProductDto.getId()));
+
+        return convertProductToResponseProductDto(resProduct);
+    }
+
+    @GetMapping("/byCategory")
+    public List<ResponseProductDto> getAllProductsInCategory(@RequestBody CategoryListDto categories) {
+
+        List<Product> products = productServicedb.getAllProductsByCategory(categories.getCategories());
+        List<ResponseProductDto> responseProductDtos = new ArrayList<>();
+
+        products.forEach(product -> {
+            responseProductDtos.add(convertProductToResponseProductDto(product));
+        });
+
+        return responseProductDtos;
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteProductById(@PathVariable("id") String uuid){
+        productServicedb.deleteProductByID(uuid);
+        return "Product Deleted successfully";
+    }
+
+
 }
