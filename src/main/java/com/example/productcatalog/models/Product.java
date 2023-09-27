@@ -20,13 +20,12 @@ public class Product extends  BaseModel{
     // 1:1
     // M:1
     // M:1
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(name ="category")
     private Category category;
 
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     // to persist the data on creating the record for reference variable
     private Price price = new Price();
-
 
 }
