@@ -28,9 +28,12 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseProductDto getProductById(@PathVariable("id") String uuid) {
 
-        Product product = productServicedb.getProductByID(UUID.fromString(uuid));
+        System.out.println("hai product controller");
+        return null;
 
-        return convertProductToResponseProductDto(product);
+//        Product product = productServicedb.getProductByID(UUID.fromString(uuid));
+//
+//        return convertProductToResponseProductDto(product);
     }
 
     @PostMapping
